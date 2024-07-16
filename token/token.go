@@ -2,6 +2,7 @@ package token
 
 type TokenType uint8
 
+// TODO add line numbers
 type Token struct {
 	Type    TokenType
 	Literal string
@@ -50,34 +51,34 @@ const (
 )
 
 // For pretty printing the enum values
-var tokenTypeStrings = [...]string{
-	"ILLEGAL",
-	"EOF",
-	"IDENTIFIER",
-	"INT",
-	"ASSIGN",
-	"PLUS",
-	"MINUS",
-	"BANG",
-	"ASTERISK",
-	"SLASH",
-	"LT",
-	"GT",
-	"COMMA",
-	"SEMICOLON",
-	"LPAREN",
-	"RPAREN",
-	"LBRACE",
-	"RBRACE",
-	"FUNCTION",
-	"LET",
-	"IF",
-	"ELSE",
-	"RETURN",
-	"TRUE",
-	"FALSE",
-	"EQ",
-	"NOT_EQ",
+var tokenTypeStrings = map[TokenType]string{
+	ILLEGAL:    "ILLEGAL",
+	EOF:        "EOF",
+	IDENTIFIER: "IDENTIFIER",
+	INT:        "INT",
+	ASSIGN:     "ASSIGN",
+	PLUS:       "PLUS",
+	MINUS:      "MINUS",
+	BANG:       "BANG",
+	ASTERISK:   "ASTERISK",
+	SLASH:      "SLASH",
+	LT:         "LT",
+	GT:         "GT",
+	COMMA:      "COMMA",
+	SEMICOLON:  "SEMICOLON",
+	LPAREN:     "LPAREN",
+	RPAREN:     "RPAREN",
+	LBRACE:     "LBRACE",
+	RBRACE:     "RBRACE",
+	FUNCTION:   "FUNCTION",
+	LET:        "LET",
+	IF:         "IF",
+	ELSE:       "ELSE",
+	RETURN:     "RETURN",
+	TRUE:       "TRUE",
+	FALSE:      "FALSE",
+	EQ:         "EQ",
+	NOT_EQ:     "NOT_EQ",
 }
 
 func (tt TokenType) String() string {
@@ -89,15 +90,15 @@ func New(tt TokenType, l string) Token {
 }
 
 var keywords = map[string]TokenType{
-	"fn":  FUNCTION,
-	"let": LET,
-	"if": IF,
-	"else": ELSE,
+	"fn":     FUNCTION,
+	"let":    LET,
+	"if":     IF,
+	"else":   ELSE,
 	"return": RETURN,
-	"true": TRUE,
-	"false": FALSE,
-	"==": EQ,
-	"!=": NOT_EQ,
+	"true":   TRUE,
+	"false":  FALSE,
+	"==":     EQ,
+	"!=":     NOT_EQ,
 }
 
 func LookupIdentifier(identifier string) TokenType {
