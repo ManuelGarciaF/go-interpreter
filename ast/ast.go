@@ -56,7 +56,10 @@ func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 func (ls *LetStatement) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(ls.TokenLiteral() + " " + ls.Name.String() + " = ")
+	sb.WriteString(ls.TokenLiteral())
+	sb.WriteString(" ")
+	sb.WriteString(ls.Name.String())
+	sb.WriteString(" = ")
 
 	if ls.Value != nil { // TODO remove nil check
 		sb.WriteString(ls.Value.String())
@@ -87,7 +90,8 @@ func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }
 func (rs *ReturnStatement) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(rs.TokenLiteral() + " ")
+	sb.WriteString(rs.TokenLiteral())
+	sb.WriteString(" ")
 
 	if rs.Value != nil { // TODO remove nil check
 		sb.WriteString(rs.Value.String())
@@ -128,7 +132,7 @@ type PrefixExpression struct {
 	Right    Expression  // The expression on the right of the operator
 }
 
-// Implements expression
+// Implements Expression
 func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
@@ -142,9 +146,111 @@ type InfixExpression struct {
 	Right    Expression  // The expression on the right of the operator
 }
 
-// Implements expression
+// Implements Expression
 func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *InfixExpression) String() string {
 	return "(" + ie.Left.String() + " " + ie.Operator + " " + ie.Right.String() + ")"
+}
+
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *Boolean) expressionNode()      {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string       { return b.Token.Literal }
+
+type IfExpression struct {
+	Token       token.Token // token.IF
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+// Implements Expression
+func (ie *IfExpression) expressionNode()      {}
+func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IfExpression) String() string {
+	var sb strings.Builder
+
+	sb.WriteString("if ")
+	sb.WriteString(ie.Condition.String())
+	sb.WriteString(" ")
+	sb.WriteString(ie.Consequence.String())
+	if ie.Alternative != nil {
+		sb.WriteString("else ")
+		sb.WriteString(ie.Alternative.String())
+	}
+
+	return sb.String()
+}
+
+type BlockStatement struct {
+	Token      token.Token // The opening '{'
+	Statements []Statement
+}
+
+// Implements Statement
+func (bs *BlockStatement) statementNode()       {}
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockStatement) String() string {
+	var sb strings.Builder
+
+	for _, s := range bs.Statements {
+		sb.WriteString(s.String())
+	}
+
+	return sb.String()
+}
+
+type FunctionLiteral struct {
+	Token      token.Token // token.FUNCTION
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+// Implements Expression
+func (fl *FunctionLiteral) expressionNode()      {}
+func (fl *FunctionLiteral) TokenLiteral() string { return fl.Token.Literal }
+func (fl *FunctionLiteral) String() string {
+	var sb strings.Builder
+
+	params := make([]string, 0, len(fl.Parameters))
+	for _, p := range fl.Parameters {
+		params = append(params, p.String())
+	}
+
+	sb.WriteString("fn(")
+	sb.WriteString(strings.Join(params, ", "))
+	sb.WriteString(")")
+	sb.WriteString(fl.Body.String())
+
+	return sb.String()
+}
+
+type CallExpression struct {
+	Token     token.Token // token.LPAREN
+	Function  Expression  // Identifier or FunctionLiteral
+	Arguments []Expression
+}
+
+// Implements Expression
+func (ce *CallExpression) expressionNode()      {}
+func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
+func (ce *CallExpression) String() string {
+	var sb strings.Builder
+
+	args := make([]string, 0, len(ce.Arguments))
+	for _, a := range ce.Arguments {
+		args = append(args, a.String())
+	}
+
+	sb.WriteString(ce.Function.String())
+	sb.WriteString("(")
+	sb.WriteString(strings.Join(args, ", "))
+	sb.WriteString(")")
+
+	return sb.String()
 }
