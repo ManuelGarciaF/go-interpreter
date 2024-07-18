@@ -1,27 +1,41 @@
 package repl
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 
 	"github.com/ManuelGarciaF/go-interpreter/lexer"
-	"github.com/ManuelGarciaF/go-interpreter/token"
+	"github.com/ManuelGarciaF/go-interpreter/parser"
+
+	"github.com/chzyer/readline"
 )
 
-const PROMPT = "> "
+func Start(in io.ReadCloser, out io.Writer) {
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt: "> ",
+		Stdin: in,
+		Stdout: out,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer rl.Close()
 
-func Start(in io.Reader, out io.Writer) {
-	scanner := bufio.NewScanner(in)
-
-	fmt.Fprintf(out, PROMPT)
-	for scanner.Scan() {
-		line := scanner.Text()
-		l := lexer.New(line)
-
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Fprintf(out, "%+v\n", tok)
+	for {
+		line, err := rl.Readline()
+		if err != nil { // EOF or interrupt
+			break
 		}
-		fmt.Fprintf(out, PROMPT)
+		l := lexer.New(line)
+		p := parser.New(l)
+
+		program := p.ParseProgram()
+		if len(p.Errors()) == 0 {
+			fmt.Fprintln(out, program.String())
+		} else {
+			for _, msg := range p.Errors() {
+				fmt.Fprintf(out, "\t%s\n", msg)
+			}
+		}
 	}
 }
