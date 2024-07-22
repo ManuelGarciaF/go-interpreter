@@ -140,7 +140,7 @@ func (pe *PrefixExpression) String() string {
 }
 
 type InfixExpression struct {
-	Token    token.Token // The prefix token, token.MINUS or token.BANG.
+	Token    token.Token // The operator's token
 	Left     Expression  // The expression on the left of the operator
 	Operator string      // "+", "-", "*", etc.
 	Right    Expression  // The expression on the right of the operator
@@ -198,9 +198,11 @@ func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
 func (bs *BlockStatement) String() string {
 	var sb strings.Builder
 
+	sb.WriteString("{")
 	for _, s := range bs.Statements {
 		sb.WriteString(s.String())
 	}
+	sb.WriteString("}")
 
 	return sb.String()
 }
