@@ -345,6 +345,10 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	p.nextToken()
 
 	for !p.currTokenIs(token.RBRACE) {
+		if p.currTokenIs(token.EOF) {
+			// NOTE this is ugly, need to implement error handling at the parsing stage
+			panic("Malformed block statement")
+		}
 		statement := p.parseStatement()
 
 		if statement != nil {
