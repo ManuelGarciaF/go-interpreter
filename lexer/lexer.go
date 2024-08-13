@@ -85,17 +85,30 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.New(token.LBRACE, string(l.ch))
 	case '}':
 		tok = token.New(token.RBRACE, string(l.ch))
+	case '[':
+		tok = token.New(token.LBRACKET, string(l.ch))
+	case ']':
+		tok = token.New(token.RBRACKET, string(l.ch))
+	case '"':
+		// There are cases in which we don't find a complete string.
+		string, ok := l.readString()
+		if ok {
+			tok = token.New(token.STRING, string)
+		} else {
+			tok = token.New(token.EOF, "")
+		}
+
 	case EOF:
 		tok = token.New(token.EOF, "")
 	default:
 		// We have to check for identifiers if there are letters.
 		if isLetter(l.ch) {
 			literal := l.readIdentifier()
-			// We return early so we don't advance an extra character
+			// We return early so we don't advance an extra character.
 			return token.New(token.LookupIdentifier(literal), literal)
 		} else if isDigit(l.ch) { // Check for ints.
 			num := l.readNumber()
-			// We return early so we don't advance an extra character
+			// We return early so we don't advance an extra character.
 			return token.New(token.INT, num)
 		} else { // If it does not start with a letter it's not a valid token.
 			tok = token.New(token.ILLEGAL, string(l.ch))
@@ -111,7 +124,7 @@ func (l *Lexer) NextToken() token.Token {
 func (l *Lexer) readIdentifier() string {
 	initialPos := l.position
 
-	// We already checked the first one is exclusively a letter before
+	// We already checked the first one is exclusively a letter before.
 	for isValidInIdentifier(l.ch) {
 		l.readChar()
 	}
@@ -129,6 +142,21 @@ func (l *Lexer) readNumber() string {
 	}
 	// The current ch is not part of the identifier, so we use l.position.
 	return l.input[initialPos:l.position]
+}
+
+// Returns the string, and ok. ok is false if a closing '"' couldnt' be found.
+func (l *Lexer) readString() (string, bool) {
+	// Advance the first '"'
+	l.readChar()
+
+	start := l.position
+	for l.ch != '"' {
+		l.readChar()
+		if l.ch == EOF {
+			return "", false
+		}
+	}
+	return l.input[start:l.position], true
 }
 
 func (l *Lexer) skipWhitespace() {

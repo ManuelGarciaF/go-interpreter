@@ -17,6 +17,7 @@ const (
 	// Identifier and literals
 	IDENTIFIER
 	INT
+	STRING
 
 	// Operators
 	ASSIGN
@@ -37,6 +38,8 @@ const (
 	RPAREN
 	LBRACE
 	RBRACE
+	LBRACKET
+	RBRACKET
 
 	// Keywords
 	FUNCTION
@@ -56,6 +59,7 @@ var tokenTypeStrings = map[TokenType]string{
 	EOF:        "EOF",
 	IDENTIFIER: "IDENTIFIER",
 	INT:        "INT",
+	STRING:     "STRING",
 	ASSIGN:     "ASSIGN",
 	PLUS:       "PLUS",
 	MINUS:      "MINUS",
@@ -70,6 +74,8 @@ var tokenTypeStrings = map[TokenType]string{
 	RPAREN:     "RPAREN",
 	LBRACE:     "LBRACE",
 	RBRACE:     "RBRACE",
+	LBRACKET:   "LBRACKET",
+	RBRACKET:   "RBRACKET",
 	FUNCTION:   "FUNCTION",
 	LET:        "LET",
 	IF:         "IF",

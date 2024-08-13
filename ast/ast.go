@@ -126,6 +126,39 @@ func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
 
+type StringLiteral struct {
+	Token token.Token // token.STRING
+	Value string
+}
+
+// Implements Expression
+func (sl *StringLiteral) expressionNode()      {}
+func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
+func (sl *StringLiteral) String() string       { return sl.Token.Literal }
+
+type ArrayLiteral struct {
+	Token    token.Token // token.LBRACKET
+	Elements []Expression
+}
+
+// Implements Expression
+func (*ArrayLiteral) expressionNode()         {}
+func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
+func (al *ArrayLiteral) String() string {
+	var sb strings.Builder
+
+	elements := make([]string, 0, len(al.Elements))
+	for _, el := range al.Elements {
+		elements = append(elements, el.String())
+	}
+
+	sb.WriteByte('[')
+	sb.WriteString(strings.Join(elements, ", "))
+	sb.WriteByte(']')
+
+	return sb.String()
+}
+
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, token.MINUS or token.BANG.
 	Operator string      // "-" or "!"
@@ -255,4 +288,17 @@ func (ce *CallExpression) String() string {
 	sb.WriteString(")")
 
 	return sb.String()
+}
+
+type IndexExpression struct {
+	Token token.Token // token.LBRACKET
+	Left  Expression
+	Index Expression
+}
+
+// Implements Expression
+func (ie *IndexExpression) expressionNode()      {}
+func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IndexExpression) String() string {
+	return "(" + ie.Left.String() + "[" + ie.Index.String() + "])"
 }

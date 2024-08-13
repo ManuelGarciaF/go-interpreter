@@ -11,20 +11,26 @@ type ObjectType int
 
 const (
 	INTEGER_OBJ ObjectType = iota
+	STRING_OBJ
+	ARRAY_OBJ
 	BOOLEAN_OBJ
 	NULL_OBJ
 	RETURN_VALUE_OBJ
 	FUNCTION_OBJ
+	BUILTIN_OBJ
 	ERROR_OBJ
 )
 
 // For pretty printing the enum values
 var objectTypeStrings = map[ObjectType]string{
 	INTEGER_OBJ:      "INTEGER",
+	STRING_OBJ:       "STRING",
+	ARRAY_OBJ:        "ARRAY",
 	BOOLEAN_OBJ:      "BOOLEAN",
 	NULL_OBJ:         "NULL",
 	RETURN_VALUE_OBJ: "RETURN_VALUE",
 	FUNCTION_OBJ:     "FUNCTION",
+	BUILTIN_OBJ:      "BUILTIN",
 	ERROR_OBJ:        "ERROR",
 }
 
@@ -43,6 +49,33 @@ type Integer struct {
 
 func (*Integer) Type() ObjectType  { return INTEGER_OBJ }
 func (i *Integer) Inspect() string { return fmt.Sprint(i.Value) }
+
+type String struct {
+	Value string
+}
+
+func (*String) Type() ObjectType  { return STRING_OBJ }
+func (s *String) Inspect() string { return fmt.Sprint("\"" + s.Value + "\"") }
+
+type Array struct {
+	Elements []Object
+}
+
+func (*Array) Type() ObjectType { return ARRAY_OBJ }
+func (a *Array) Inspect() string {
+	var sb strings.Builder
+
+	elements := make([]string, 0, len(a.Elements))
+	for _, e := range a.Elements {
+		elements = append(elements, e.Inspect())
+	}
+
+	sb.WriteByte('[')
+	sb.WriteString(strings.Join(elements, ", "))
+	sb.WriteByte(']')
+
+	return sb.String()
+}
 
 type Boolean struct {
 	Value bool
@@ -70,7 +103,7 @@ type Function struct {
 	Env        *Environment
 }
 
-func (*Function) Type() ObjectType   { return FUNCTION_OBJ }
+func (*Function) Type() ObjectType { return FUNCTION_OBJ }
 func (f *Function) Inspect() string {
 	var sb strings.Builder
 
@@ -87,6 +120,15 @@ func (f *Function) Inspect() string {
 
 	return sb.String()
 }
+
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func (*Builtin) Type() ObjectType { return BUILTIN_OBJ }
+func (*Builtin) Inspect() string  { return "builtin function" }
 
 type Error struct {
 	Message string

@@ -38,6 +38,14 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	// Expressions
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
+	case *ast.ArrayLiteral:
+		elements := evalExpressions(node.Elements, env)
+		if len(elements) == 1 && isError(elements[0]) {
+			return elements[0]
+		}
+		return &object.Array{Elements: elements}
 	case *ast.Boolean:
 		return nativeToBooleanObject(node.Value)
 	case *ast.Identifier:
@@ -77,6 +85,16 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return applyFunction(function, args)
+	case *ast.IndexExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+		index := Eval(node.Index, env)
+		if isError(index) {
+			return index
+		}
+		return evalIndexExpression(left, index)
 	}
 
 	return nil
@@ -129,6 +147,11 @@ func nativeToBooleanObject(input bool) *object.Boolean {
 	return FALSE
 }
 
+// Utility function for creating a new int
+func nativeToIntegerObject(input int) *object.Integer {
+	return &object.Integer{Value: int64(input)}
+}
+
 func evalPrefixExpression(operator string, right object.Object) object.Object {
 	switch operator {
 	case "!":
@@ -157,6 +180,8 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		return evalStringInfixExpression(operator, left, right)
 
 	// We use pointer comparison since in these cases at least one of the arguments is a boolean
 	// or null
@@ -199,6 +224,18 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	}
 }
 
+func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
+	// Only concatenation is allowed
+	if operator != "+" {
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+	// Return a new string with the concatenated value
+	return &object.String{Value: leftVal + rightVal}
+}
+
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
 	condition := Eval(ie.Condition, env)
 	if isError(condition) {
@@ -215,11 +252,15 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
-	val, ok := env.Get(node.Value)
-	if !ok {
-		return newError("identifier not found: " + node.Value)
+	if val, ok := env.Get(node.Value); ok {
+		return val
 	}
-	return val
+
+	if builtin, ok := builtins[node.Value]; ok {
+		return builtin
+	}
+
+	return newError("identifier not found: " + node.Value)
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
@@ -238,15 +279,19 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		extendedEnv := extendFunctionEnv(fn, args)
+		// We evaluate the body, a block statement, using an enclosed env that contains the arguments
+		evaluated := Eval(fn.Body, extendedEnv)
+		return unwrapReturnValue(evaluated)
+	case *object.Builtin:
+		// No need to unwrap, builtins never return a object.ReturnValue
+		return fn.Fn(args...)
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
 
-	extendedEnv := extendFunctionEnv(function, args)
-	// We evaluate the body, a block statement, using an enclosed env that contains the arguments
-	evaluated := Eval(function.Body, extendedEnv)
-	return unwrapReturnValue(evaluated)
 }
 
 func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
@@ -259,13 +304,34 @@ func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Enviro
 	return env
 }
 
-// Since functions can use either implicit or explicit returns, we may need to unwrap ReturnValues
-// Also, we don't want a return stop nested function calls
+// Since functions can use either implicit or explicit returns, we may need to unwrap ReturnValues.
+// Also, we don't want a return to stop nested function calls.
 func unwrapReturnValue(obj object.Object) object.Object {
 	if rv, ok := obj.(*object.ReturnValue); ok {
 		return rv.Value
 	}
 	return obj
+}
+
+func evalIndexExpression(left, index object.Object) object.Object {
+	switch {
+	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ: // Array indexing
+		return evalArrayIndexExpression(left, index)
+	default:
+		return newError("index operator not supported: %s[%s]", left.Type(), index.Type())
+	}
+}
+
+func evalArrayIndexExpression(array, index object.Object) object.Object {
+	arrayObject := array.(*object.Array)
+	i := index.(*object.Integer).Value
+	size := int64(len(arrayObject.Elements))
+
+	if i < 0 || i >= size {
+		return NULL
+	}
+
+	return arrayObject.Elements[i]
 }
 
 func isTruthy(obj object.Object) bool {
