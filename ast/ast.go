@@ -61,7 +61,7 @@ func (ls *LetStatement) String() string {
 	sb.WriteString(ls.Name.String())
 	sb.WriteString(" = ")
 
-	if ls.Value != nil { // TODO remove nil check
+	if ls.Value != nil {
 		sb.WriteString(ls.Value.String())
 	}
 	sb.WriteString(";")
@@ -93,7 +93,7 @@ func (rs *ReturnStatement) String() string {
 	sb.WriteString(rs.TokenLiteral())
 	sb.WriteString(" ")
 
-	if rs.Value != nil { // TODO remove nil check
+	if rs.Value != nil {
 		sb.WriteString(rs.Value.String())
 	}
 	sb.WriteString(";")
@@ -110,7 +110,7 @@ type ExpressionStatement struct {
 func (es *ExpressionStatement) statementNode()       {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
 func (es *ExpressionStatement) String() string {
-	if es.Expression != nil { // TODO remove nil check
+	if es.Expression != nil {
 		return es.Expression.String()
 	}
 	return ""

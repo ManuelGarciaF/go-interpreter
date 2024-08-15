@@ -9,7 +9,6 @@ type Lexer struct {
 	position     int  // Pos of current char (ch)
 	readPosition int  // Pos of next char to read
 	ch           byte // Only ascii for now
-	// TODO exchange for rune and support unicode
 }
 
 const EOF byte = 0

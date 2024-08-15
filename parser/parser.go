@@ -109,7 +109,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	// Parse each statement one by one
 	for !p.currTokenIs(token.EOF) {
 		statement := p.parseStatement()
-		if statement != nil { // TODO check for this error
+		if statement != nil {
 			program.Statements = append(program.Statements, statement)
 		}
 		p.nextToken()

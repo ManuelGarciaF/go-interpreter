@@ -2,7 +2,6 @@ package token
 
 type TokenType uint8
 
-// TODO add line numbers
 type Token struct {
 	Type    TokenType
 	Literal string
