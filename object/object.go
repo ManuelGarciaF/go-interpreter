@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	"hash/fnv"
 	"strings"
 
 	"github.com/ManuelGarciaF/go-interpreter/ast"
@@ -13,6 +14,7 @@ const (
 	INTEGER_OBJ ObjectType = iota
 	STRING_OBJ
 	ARRAY_OBJ
+	HASH_OBJ
 	BOOLEAN_OBJ
 	NULL_OBJ
 	RETURN_VALUE_OBJ
@@ -26,6 +28,7 @@ var objectTypeStrings = map[ObjectType]string{
 	INTEGER_OBJ:      "INTEGER",
 	STRING_OBJ:       "STRING",
 	ARRAY_OBJ:        "ARRAY",
+	HASH_OBJ:         "HASH",
 	BOOLEAN_OBJ:      "BOOLEAN",
 	NULL_OBJ:         "NULL",
 	RETURN_VALUE_OBJ: "RETURN_VALUE",
@@ -43,12 +46,22 @@ type Object interface {
 	Inspect() string
 }
 
+type Hashable interface {
+	HashKey() HashKey
+}
+
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
 type Integer struct {
 	Value int64
 }
 
-func (*Integer) Type() ObjectType  { return INTEGER_OBJ }
-func (i *Integer) Inspect() string { return fmt.Sprint(i.Value) }
+func (*Integer) Type() ObjectType   { return INTEGER_OBJ }
+func (i *Integer) Inspect() string  { return fmt.Sprint(i.Value) }
+func (i *Integer) HashKey() HashKey { return HashKey{Type: i.Type(), Value: uint64(i.Value)} }
 
 type String struct {
 	Value string
@@ -56,6 +69,17 @@ type String struct {
 
 func (*String) Type() ObjectType  { return STRING_OBJ }
 func (s *String) Inspect() string { return fmt.Sprint("\"" + s.Value + "\"") }
+func (s *String) HashKey() HashKey {
+	// Hash the string using FNV-64.
+	// In an ideal world, something would be done about collisions.
+	h := fnv.New64()
+	h.Write([]byte(s.Value))
+
+	return HashKey{
+		Type:  s.Type(),
+		Value: h.Sum64(),
+	}
+}
 
 type Array struct {
 	Elements []Object
@@ -77,17 +101,55 @@ func (a *Array) Inspect() string {
 	return sb.String()
 }
 
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (*Hash) Type() ObjectType { return HASH_OBJ }
+func (h *Hash) Inspect() string {
+	var sb strings.Builder
+
+	pairs := make([]string, 0, len(h.Pairs))
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s: %s", pair.Key.Inspect(), pair.Value.Inspect()))
+	}
+
+	sb.WriteByte('{')
+	sb.WriteString(strings.Join(pairs, ", "))
+	sb.WriteByte('}')
+
+	return sb.String()
+}
+
 type Boolean struct {
 	Value bool
 }
 
 func (*Boolean) Type() ObjectType  { return BOOLEAN_OBJ }
 func (b *Boolean) Inspect() string { return fmt.Sprintf("%t", b.Value) }
+func (b *Boolean) HashKey() HashKey {
+	var v uint64
+	if b.Value {
+		v = 1
+	} else {
+		v = 0
+	}
+
+	return HashKey{
+		Type:  b.Type(),
+		Value: v,
+	}
+}
 
 type Null struct{}
 
-func (*Null) Type() ObjectType  { return NULL_OBJ }
-func (b *Null) Inspect() string { return "null" }
+func (*Null) Type() ObjectType { return NULL_OBJ }
+func (*Null) Inspect() string  { return "null" }
 
 // Wraps an object
 type ReturnValue struct {

@@ -41,6 +41,7 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.skipWhitespace()
 
+	// NOTE: Could simplify this by extracting all the simple cases into a map
 	switch l.ch {
 	case '=':
 		if l.peekChar() == '=' {
@@ -76,6 +77,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.New(token.COMMA, string(l.ch))
 	case ';':
 		tok = token.New(token.SEMICOLON, string(l.ch))
+	case ':':
+		tok = token.New(token.COLON, string(l.ch))
 	case '(':
 		tok = token.New(token.LPAREN, string(l.ch))
 	case ')':

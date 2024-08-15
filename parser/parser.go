@@ -70,12 +70,13 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.IDENTIFIER] = p.parseIdentifier
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
 	p.prefixParseFns[token.STRING] = p.parseStringLiteral
-	p.prefixParseFns[token.LBRACKET] = p.parseArrayLiteral
 	p.prefixParseFns[token.BANG] = p.parsePrefixExpression
 	p.prefixParseFns[token.MINUS] = p.parsePrefixExpression
 	p.prefixParseFns[token.TRUE] = p.parseBoolean
 	p.prefixParseFns[token.FALSE] = p.parseBoolean
 	p.prefixParseFns[token.LPAREN] = p.parseGroupedExpression
+	p.prefixParseFns[token.LBRACKET] = p.parseArrayLiteral
+	p.prefixParseFns[token.LBRACE] = p.parseHashLiteral
 	p.prefixParseFns[token.IF] = p.parseIfExpression
 	p.prefixParseFns[token.FUNCTION] = p.parseFunctionLiteral
 
@@ -233,6 +234,40 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.currToken}
 	array.Elements = p.parseExpressionList(token.RBRACKET)
 	return array
+}
+
+func (p *Parser) parseHashLiteral() ast.Expression {
+	hash := &ast.HashLiteral{Token: p.currToken}
+	hash.Pairs = make(map[ast.Expression]ast.Expression)
+
+	for !p.peekTokenIs(token.RBRACE) {
+		p.nextToken()
+
+		// We expect "key: value"
+		key := p.parseExpression(LOWEST)
+		if !p.expectPeek(token.COLON) {
+			return nil
+		}
+
+		p.nextToken()
+		value := p.parseExpression(LOWEST)
+
+		hash.Pairs[key] = value
+
+		// Only expectPeek if we are at the closing brace.
+		if !p.peekTokenIs(token.RBRACE) {
+			// Separated into two ifs to make the side effect explicit.
+			if !p.expectPeek(token.COMMA) {
+				return  nil
+			}
+		}
+	}
+	// We expect here to throw an error if invalid.
+	if !p.expectPeek(token.RBRACE) {
+		return nil
+	}
+
+	return hash
 }
 
 func (p *Parser) parseBoolean() ast.Expression {

@@ -32,6 +32,7 @@ const (
 	// Delimiters
 	COMMA
 	SEMICOLON
+	COLON
 
 	LPAREN
 	RPAREN
@@ -69,6 +70,7 @@ var tokenTypeStrings = map[TokenType]string{
 	GT:         "GT",
 	COMMA:      "COMMA",
 	SEMICOLON:  "SEMICOLON",
+	COLON:      "COLON",
 	LPAREN:     "LPAREN",
 	RPAREN:     "RPAREN",
 	LBRACE:     "LBRACE",

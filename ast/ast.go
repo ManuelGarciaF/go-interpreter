@@ -159,6 +159,29 @@ func (al *ArrayLiteral) String() string {
 	return sb.String()
 }
 
+type HashLiteral struct {
+	Token token.Token // token.LBRACE
+	Pairs map[Expression]Expression
+}
+
+// Implements Expression
+func (*HashLiteral) expressionNode()         {}
+func (hl *HashLiteral) TokenLiteral() string { return hl.Token.Literal }
+func (hl *HashLiteral) String() string {
+	var sb strings.Builder
+
+	pairs := make([]string, 0, len(hl.Pairs))
+	for k, v := range hl.Pairs {
+		pairs = append(pairs, k.String()+":"+v.String())
+	}
+
+	sb.WriteByte('{')
+	sb.WriteString(strings.Join(pairs, ", "))
+	sb.WriteByte('}')
+
+	return sb.String()
+}
+
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, token.MINUS or token.BANG.
 	Operator string      // "-" or "!"
