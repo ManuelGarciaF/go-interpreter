@@ -11,22 +11,12 @@ let result = 10 * (20 / 2);
 let myArray = [1, 2, 3, 4, 5];
 let myHash = {"key1": "lorem ipsum", "key2": 42};
 
-let fibonacci = fn(x) {
-  if (x <= 1 ) {
-    x
-  } else {
-    fibonacci(x - 1) + fibonacci(x - 2);
-  }
-};
+let fibonacci = fn(x) { if (x < 2) { x } else { fibonacci(x - 1) + fibonacci (x - 2) }}
 ```
 
 Complicated Hello world example:
 ```
-puts(
-  ["Hello", 42][0],
-  {"second word": "world"}["second word"],
-  fn(b) { if (b) { "!" } else { "something else" } }(true)
-)
+puts(["Hello", 42][0], {"second word": "world"}["second word"], fn(b) { if (b) { "!" } else { "something else" } }(true))
 ```
 
 ## Usage
