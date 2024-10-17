@@ -12,7 +12,7 @@ let myArray = [1, 2, 3, 4, 5];
 let myHash = {"key1": "lorem ipsum", "key2": 42};
 
 let fibonacci = fn(x) {
-  if (x <= 1 )
+  if (x <= 1 ) {
       x
     } else {
       fibonacci(x - 1) + fibonacci(x - 2);
@@ -23,7 +23,11 @@ let fibonacci = fn(x) {
 
 Complicated Hello world example:
 ```
-puts(["Hello", 42][0], {"second word": "world"}["second word"], fn(b) { if (b) { "!" } else { "something else" } }(true))
+puts(
+  ["Hello", 42][0],
+  {"second word": "world"}["second word"],
+  fn(b) { if (b) { "!" } else { "something else" } }(true)
+)
 ```
 
 ## Usage
@@ -31,5 +35,5 @@ puts(["Hello", 42][0], {"second word": "world"}["second word"], fn(b) { if (b) {
 The interpreter is provided as a REPL, to run it use:
 
 ``` sh
-$ go run github.com/ManuelGarciaF/go-interpreter@latest
+go run github.com/ManuelGarciaF/go-interpreter@latest
 ```
