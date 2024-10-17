@@ -13,10 +13,9 @@ let myHash = {"key1": "lorem ipsum", "key2": 42};
 
 let fibonacci = fn(x) {
   if (x <= 1 ) {
-      x
-    } else {
-      fibonacci(x - 1) + fibonacci(x - 2);
-    }
+    x
+  } else {
+    fibonacci(x - 1) + fibonacci(x - 2);
   }
 };
 ```
